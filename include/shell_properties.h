@@ -8,7 +8,9 @@ struct ShellProperties {
    * Apparently all of the variables inside this
    * struct are of char type. Need a bit help over here
    */
-  char *showWelcome;
+  bool showWelcome;
+  bool showPWD;
+  bool showClock; 
   char *promptCharacter;
 };
 

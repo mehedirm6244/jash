@@ -5,21 +5,9 @@ void jash_loop() {
   char *line;
   char **args;
 
-  /* For displaying current time */
-  struct tm * currentTime;
-  time_t currentRawTime;
-
   do {
-    /* Get current time */
-    time(&currentRawTime);
-    currentTime = localtime(&currentRawTime);
-
     /* Draw the prompt */
-    char *pwd = strdup(getenv("PWD"));
-    printf("\x1b[36m%s\x1b[0m", pwd);
-    printf(" • \x1b[32m%d:%d:%d\x1b[0m\n",
-      currentTime->tm_hour, currentTime->tm_min, currentTime->tm_sec);
-    printf("%s ", shellProperties.promptCharacter);
+    jash_prompt();
 
     /* Read line from input */
     line = jash_readLine();
@@ -35,6 +23,53 @@ void jash_loop() {
 
     printf("\n");
   } while (status);
+}
+
+void jash_prompt() {
+  /* Print the present working directory if not forbidden */
+  if (shellProperties.showPWD == 1) {
+    printf("\x1b[36m");
+    char *pwd = strdup(getenv("PWD")),
+         *home = strdup(getenv("HOME"));
+
+    /* Print "~" instead of "/home/user" for aesthetics */
+    if (strstr(pwd, home) != NULL) {
+      int i;
+      printf("~");
+      for (i = strlen(home); i < strlen(pwd); i++) {
+        printf("%c", pwd[i]);
+      }
+    } else {
+      printf("%s", pwd);
+    }
+
+    printf("\x1b[0m");
+  }
+
+  /* Print a seperator if necessary */
+  if (shellProperties.showPWD == 1 &&
+    shellProperties.showClock == 1) {
+    printf(" • ");
+  }
+
+  /* Print current time if not forbidden */
+  if (shellProperties.showClock == 1) {
+    struct tm * currentTime;
+    time_t currentRawTime;
+    time(&currentRawTime);
+    currentTime = localtime(&currentRawTime);
+
+    printf("\x1b[32m%d:%d:%d\x1b[0m",
+      currentTime->tm_hour, currentTime->tm_min, currentTime->tm_sec);
+  }
+
+  /* Print a newline if necessary */
+  if (shellProperties.showPWD == 1 ||
+    shellProperties.showClock == 1) {
+    printf("\n");
+  }
+
+  printf("\x1b[35m%s\x1b[0m ", shellProperties.promptCharacter);
 }
 
 char* jash_readLine() {
@@ -105,6 +140,13 @@ char** jash_splitLine(char *arg) {
 }
 
 int jash_execute(char **args) {
+  /*
+   * Exit if the command is empty
+   */
+  if (args[0] == NULL) {
+    return 1;
+  }
+
   /*
    * Check if the command is a builtin of JASH
    * If that's the case, then there's no need to

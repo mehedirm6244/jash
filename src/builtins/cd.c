@@ -4,7 +4,8 @@ int jash_cd(char **args) {
   /*
    * cd to ${HOME} if no argument is passed
    */
-  if (args[1] == NULL) {
+  if (args[1] == NULL ||
+    strcmp(args[1], "~") == 0) {
     args[1] = strdup(getenv("HOME"));
   }
 

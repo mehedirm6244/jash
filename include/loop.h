@@ -7,6 +7,7 @@
 
 int jash_execute(char **args);
 void jash_loop();
+void jash_prompt();
 char* jash_readLine();
 char** jash_splitLine(char *arg);
 
