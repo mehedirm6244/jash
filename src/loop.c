@@ -1,31 +1,50 @@
+/*
+ * This file is a part of jash
+ *
+ * jash is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * jash is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with jash. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "../include/loop.h"
 
 void jash_loop() {
   int status;
-  char *line;
+  char *buffer;
   char **args;
 
   do {
-    /* Draw the prompt */
-    jash_prompt();
-
     /* Read line from input */
-    line = jash_readLine();
+    buffer = jash_prompt();
 
     /* Split the line */
-    args = jash_splitLine(line);
+    args = jash_splitLine(buffer);
 
-    /* Execute command */
-    status = jash_execute(args);
+    /* Save and execute the command if it's not empty */
+    if (args[0] != NULL) {
+      add_history(buffer);
+      status = jash_execute(args);
+    } else {
+      status = 1;
+    }
 
-    free(line);
+    free(buffer);
     free(args);
 
     printf("\n");
   } while (status);
 }
 
-void jash_prompt() {
+char* jash_prompt() {
   /* Print the present working directory if not forbidden */
   if (shellProperties.showPWD == 1) {
     printf("\x1b[36m");
@@ -46,12 +65,6 @@ void jash_prompt() {
     printf("\x1b[0m");
   }
 
-  /* Print a seperator if necessary */
-  if (shellProperties.showPWD == 1 &&
-    shellProperties.showClock == 1) {
-    printf(" • ");
-  }
-
   /* Print current time if not forbidden */
   if (shellProperties.showClock == 1) {
     struct tm * currentTime;
@@ -59,43 +72,62 @@ void jash_prompt() {
     time(&currentRawTime);
     currentTime = localtime(&currentRawTime);
 
+    /* Print a seperator if necessary */
+    if (shellProperties.showPWD == 1) {
+      printf(" • ");
+    }
+
     printf("\x1b[32m%d:%d:%d\x1b[0m",
       currentTime->tm_hour, currentTime->tm_min, currentTime->tm_sec);
   }
 
   /* Print a newline if necessary */
-  if (shellProperties.showPWD == 1 ||
-    shellProperties.showClock == 1) {
+  if (shellProperties.showPWD == 1 || shellProperties.showClock == 1) {
     printf("\n");
   }
+  
+  /*
+   * prompt[1] or ps1 is used for single line inputs
+   * prompt[2] or ps2 is used for multi line inputs
+   */
+  char *prompt[2];
+  asprintf(&prompt[0], "\x1b[35m%s\x1b[0m ", shellProperties.promptCharacter);
+  asprintf(&prompt[1], "... \x1b[33m%s\x1b[0m ", shellProperties.promptCharacter);
+  int promptIdx = 0;
 
-  printf("\x1b[35m%s\x1b[0m ", shellProperties.promptCharacter);
-}
-
-char* jash_readLine() {
-  int bufSize = JASH_READLINE_BUFSIZE;
-  int index = 0;
-  char ch;
+  int bufSize = JASH_READLINE_BUFSIZE, index = 0;
   char *buffer = malloc(sizeof(char) * bufSize);
 
   if (!buffer) {
     perror("JASH");
     exit(EXIT_FAILURE);
   }
+  /*
+   * Prevent weird but obvious behavior for using strcat(); Read more: 
+   * https://stackoverflow.com/questions/18838933/why-do-i-first-have-to-strcpy-before-strcat
+   */
+  buffer[0] = '\0';
 
-  while (1) {
-    ch = getchar();
+  /*
+   * This is a very dirty way to handle multiline inputs
+   * Anyway, who cares
+   */
+  bool readInput = true;
+  do {
+    char *line;
+    int lineLength;
 
-    if (ch == EOF) {
-      exit(EXIT_SUCCESS);
-    } else if (ch == '\n') {
-      buffer[index] = '\0';
-      return buffer;
+    line = readline(prompt[promptIdx]);
+    lineLength = strlen(line);
+    if (line[lineLength - 1] == '\\') {
+      line[lineLength - 1] = '\0';
+      promptIdx = 1;
     } else {
-      buffer[index] = ch;
+      readInput = false;
+      promptIdx = 0;
     }
-    index++;
 
+    index += lineLength;
     if (index >= bufSize) {
       bufSize += JASH_READLINE_BUFSIZE;
       buffer = realloc(buffer, bufSize);
@@ -105,7 +137,11 @@ char* jash_readLine() {
         exit(EXIT_FAILURE);
       }
     }
-  }
+
+    strcat(buffer, line);
+  } while (readInput);
+  
+  return buffer;
 }
 
 char** jash_splitLine(char *arg) {
@@ -141,13 +177,6 @@ char** jash_splitLine(char *arg) {
 
 int jash_execute(char **args) {
   /*
-   * Exit if the command is empty
-   */
-  if (args[0] == NULL) {
-    return 1;
-  }
-
-  /*
    * Check if the command is a builtin of JASH
    * If that's the case, then there's no need to
    * spawn a fork and do stuffs
@@ -167,7 +196,7 @@ int jash_execute(char **args) {
   pid = fork();
   if (pid == 0) {
     if (execvp(args[0], args) == -1) {
-      perror("JASH");
+      printf("JASH: %s\n", shellProperties.cmdNotFound);
     }
     exit(EXIT_FAILURE);
   } else if (pid < 0) {
