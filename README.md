@@ -5,11 +5,14 @@ JASH stands for Just Another Shell. Through this project, I'm supposed to learn 
 <p align="center"><img src="https://github.com/mehedirm6244/jash/blob/main/assets/preview.png?raw=true"></p>
 
 ### Try JASH
+Dependencies:
+- GNU readline
+
 Cloning and compilation:
 ```
 git clone github.com/mehedirm6244/jash
 cd /jash/src
-gcc main.c -o jash
+gcc main.c -o jash -lreadline
 ```
 
 Running JASH:

@@ -12,6 +12,7 @@ struct ShellProperties {
   bool showPWD;
   bool showClock; 
   char *promptCharacter;
+  char *cmdNotFound;
 };
 
 struct ShellProperties shellProperties;

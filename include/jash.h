@@ -4,7 +4,7 @@
 /* JASH version */
 #define JASH_VERSION_MAJOR 0
 #define JASH_VERSION_MINOR 1
-#define JASH_VERSION_PATCH 0
+#define JASH_VERSION_PATCH 1
 
 /* Prototypes */
 void jash_version();
