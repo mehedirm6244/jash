@@ -8,5 +8,6 @@
 
 /* Prototypes */
 void jash_version();
+void jash_welcome();
 
 #endif

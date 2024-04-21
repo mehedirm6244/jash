@@ -21,21 +21,44 @@ void jash_loop() {
   int status;
   char *buffer;
   char **args;
+  time_t timeElapsed = 0;
 
   do {
     /* Read line from input */
-    buffer = jash_prompt();
+    buffer = jash_prompt(timeElapsed);
 
-    /* Split the line */
+    /* Save input to history */
+    add_history(buffer);
+
+    /*
+     * TODO: check for multi-commands in a single line
+     * through looking for ';'
+     * Corner case: `echo "hqhqhq; hqhqhq"
+     *
+     * How to implement:
+     * Use strtok, and something equivalent to string commands[]
+     * then for each cmd in commands:
+     *   splitline(cmd)
+     *   execute(cmd)
+     */
+
+    /*
+     * Split input to tokens
+     * args[0] is the command being called
+     * args[i] (i>0) is an argument of args[0]
+     */
     args = jash_splitLine(buffer);
 
-    /* Save and execute the command if it's not empty */
+    timeElapsed = time(NULL);
+
+    /* Execute the command if it's not empty to prevent segfault */
     if (args[0] != NULL) {
-      add_history(buffer);
       status = jash_execute(args);
     } else {
       status = 1;
     }
+
+    timeElapsed = time(NULL) - timeElapsed;
 
     free(buffer);
     free(args);
@@ -44,12 +67,13 @@ void jash_loop() {
   } while (status);
 }
 
-char* jash_prompt() {
+char* jash_prompt(time_t timeElapsed) {
   /* Print the present working directory if not forbidden */
-  if (shellProperties.showPWD == 1) {
-    printf("\x1b[36m");
+  if (shellConfig.showPWD == 1) {
     char *pwd = strdup(getenv("PWD")),
          *home = strdup(getenv("HOME"));
+
+    printf("\x1b[36m");
 
     /* Print "~" instead of "/home/user" for aesthetics */
     if (strstr(pwd, home) != NULL) {
@@ -59,31 +83,11 @@ char* jash_prompt() {
         printf("%c", pwd[i]);
       }
     } else {
+      /* Example: "/usr/share" which is not under $HOME */
       printf("%s", pwd);
     }
 
-    printf("\x1b[0m");
-  }
-
-  /* Print current time if not forbidden */
-  if (shellProperties.showClock == 1) {
-    struct tm * currentTime;
-    time_t currentRawTime;
-    time(&currentRawTime);
-    currentTime = localtime(&currentRawTime);
-
-    /* Print a seperator if necessary */
-    if (shellProperties.showPWD == 1) {
-      printf(" • ");
-    }
-
-    printf("\x1b[32m%d:%d:%d\x1b[0m",
-      currentTime->tm_hour, currentTime->tm_min, currentTime->tm_sec);
-  }
-
-  /* Print a newline if necessary */
-  if (shellProperties.showPWD == 1 || shellProperties.showClock == 1) {
-    printf("\n");
+    printf("\x1b[0m • \x1b[32mTook %lds\x1b[0m\n", timeElapsed);
   }
   
   /*
@@ -91,12 +95,12 @@ char* jash_prompt() {
    * prompt[2] or ps2 is used for multi line inputs
    */
   char *prompt[2];
-  asprintf(&prompt[0], "\x1b[35m%s\x1b[0m ", shellProperties.promptCharacter);
-  asprintf(&prompt[1], "... \x1b[33m%s\x1b[0m ", shellProperties.promptCharacter);
+  asprintf(&prompt[0], "\x1b[35m%s\x1b[0m ", shellConfig.promptCharacter);
+  asprintf(&prompt[1], "… \x1b[33m%s\x1b[0m ", shellConfig.promptCharacter);
   int promptIdx = 0;
 
   int bufSize = JASH_READLINE_BUFSIZE, index = 0;
-  char *buffer = malloc(sizeof(char) * bufSize);
+  char *buffer = malloc(bufSize * sizeof(char*));
 
   if (!buffer) {
     perror("JASH");
@@ -130,7 +134,7 @@ char* jash_prompt() {
     index += lineLength;
     if (index >= bufSize) {
       bufSize += JASH_READLINE_BUFSIZE;
-      buffer = realloc(buffer, bufSize);
+      buffer = realloc(buffer, bufSize * sizeof(char*));
 
       if (!buffer) {
         perror("JASH");
@@ -196,7 +200,7 @@ int jash_execute(char **args) {
   pid = fork();
   if (pid == 0) {
     if (execvp(args[0], args) == -1) {
-      printf("JASH: %s\n", shellProperties.cmdNotFound);
+      printf("JASH: Failed to execute: %s\n", args[0]);
     }
     exit(EXIT_FAILURE);
   } else if (pid < 0) {

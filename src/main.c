@@ -26,47 +26,42 @@
 
 #include "jash.c"
 #include "builtins.c"
-#include "shell_properties.c"
+#include "config.c"
 #include "loop.c"
 
 int main(int argc, char *argv[]) {
   /*
    * Check if any flag is passed
-   * example: `jash --version` will not run jash_loop
-   * but just print the running version of JASH and then
-   * exit
+   * Example: `jash --version` will not call jash_loop() i.e. the shell
+   * itself but just print the running version of JASH and then exit
    */
   int opt;
   for (opt = 1; opt < argc; opt++) {
     if (strcmp(argv[opt], "--help") == 0 || strcmp(argv[opt], "-h") == 0) {
       jash_help(NULL);
-      return 0;
     } else if (strcmp(argv[opt], "--version") == 0 ||
       strcmp(argv[opt], "-v") == 0) {
-      printf("JASH version %d.%d.%d\n",
-        JASH_VERSION_MAJOR, JASH_VERSION_MINOR, JASH_VERSION_PATCH);
-      return 0;
+      jash_version();
     } else {
-      printf("Invalid format!\n");
-      printf("Available formats are:\n");
+      printf("Invalid command!\n");
+      printf("Recognised formats are:\n");
       printf("  -h | --help\n");
       printf("  -v | --version\tShow current JASH version\n");
-      return 0;
+      exit(EXIT_FAILURE);
     }
+
+    exit(EXIT_SUCCESS);
   }
 
   /* Initialize shell properties */
-  jash_init_shellProperties();
+  jash_initConfig();
 
   /*
    * Show a welcome message when running JASH for the first time
    * unless disabled in the config
    */
-  if (shellProperties.showWelcome == 1) {
-    printf("JASH %d.%d.%d\n", JASH_VERSION_MAJOR, JASH_VERSION_MINOR, JASH_VERSION_PATCH);
-    printf("Welcome to JASH (Just Another SHell)!\n");
-    printf("To submit an issue, visit https://github.com/mehedirm6244/jash/issues\n");
-    printf("Type `help` for assistance\n\n");
+  if (shellConfig.showWelcome == 1) {
+    jash_welcome();
   }
 
   /* JASH starts from here */

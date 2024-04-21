@@ -15,18 +15,15 @@
  * along with jash. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/shell_properties.h"
+#include "../include/config.h"
 
-void jash_init_shellProperties() {
+void jash_initConfig() {
   /*
    * These are the default properties for JASH shell
    * These will be overwritten by `.jashrc` if it exists
+   * To be implemented later
    */
-  shellProperties.showWelcome = 1;
-  shellProperties.showPWD = 1;
-  shellProperties.showClock = 1;
-  shellProperties.promptCharacter = "❯";
-  shellProperties.cmdNotFound = "Command not found";
-
-  // TO BE IMPLEMENTED
+  shellConfig.showWelcome = 1;
+  shellConfig.showPWD = 1;
+  shellConfig.promptCharacter = "❯";
 }

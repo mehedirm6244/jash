@@ -9,7 +9,9 @@ _First commit. Fully experimental. Do expect a lot of bugs and missing features.
 ### Added
 
 - Support for multiline inputs
+- Show how much time elapsed in a process (if greater than 3 seconds)
 
 ### Changed
 
 - Use readline() for reading inputs
+- Improved `cd`
