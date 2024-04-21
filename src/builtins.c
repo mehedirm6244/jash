@@ -15,4 +15,18 @@
  * along with jash. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/builtins.h"
+#include <jash/builtins/cd.h>
+#include <jash/builtins/help.h>
+#include <jash/builtins/exit.h>
+
+char *jash_builtins[] = {
+        "cd",
+        "help",
+        "exit"
+};
+
+int (*jash_builtinFunc[]) (char **) = {
+        &jash_cd,
+        &jash_help,
+        &jash_exit
+};

@@ -15,7 +15,9 @@
  * along with jash. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/jash.h"
+#include <stdio.h>
+
+#include <jash/jash.h>
 
 void jash_version() {
   printf("JASH version %d.%d.%d\n",

@@ -15,7 +15,9 @@
  * along with jash. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/config.h"
+#include <jash/config.h>
+
+struct ShellConfig shellConfig;
 
 void jash_initConfig() {
   /*

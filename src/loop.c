@@ -15,7 +15,19 @@
  * along with jash. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/loop.h"
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <readline/history.h>
+#include <readline/readline.h>
+#include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
+
+#include <jash/builtins.h>
+#include <jash/config.h>
+#include <jash/loop.h>
 
 void jash_loop() {
   int status;
@@ -187,8 +199,8 @@ int jash_execute(char **args) {
    * We can call that command directly as a function
    * then
    */
-  int i, numberOfBuiltins = (sizeof(jash_builtins) / sizeof(char *));
-  for (i = 0; i < numberOfBuiltins; i++) {
+  int i;
+  for (i = 0; i < N_BUILTINS; i++) {
     if (strcmp(args[0], jash_builtins[i]) == 0) {
       return (*jash_builtinFunc[i])(args);
     }

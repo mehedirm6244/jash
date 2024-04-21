@@ -15,7 +15,13 @@
  * along with jash. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../../include/builtins/cd.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <linux/limits.h>
+#include <unistd.h>
+
+#include <jash/builtins/cd.h>
 
 int jash_cd(char **args) { 
   /* cd to $HOME if no argument is passed */

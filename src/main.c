@@ -15,19 +15,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <unistd.h>
 #include <string.h>
-#include <time.h>
-#include <sys/wait.h>
-#include <linux/limits.h>
-#include <readline/readline.h> 
-#include <readline/history.h> 
 
-#include "jash.c"
-#include "builtins.c"
-#include "config.c"
-#include "loop.c"
+#include <jash/jash.h>
+#include <jash/builtins/help.h>
+#include <jash/config.h>
+#include <jash/loop.h>
 
 int main(int argc, char *argv[]) {
   /*

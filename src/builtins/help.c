@@ -1,4 +1,6 @@
-#include "../../include/builtins/help.h"
+#include <stdio.h>
+
+#include <jash/builtins/help.h>
 
 int jash_help(char **args) {
   printf("Builtin commands:\n");

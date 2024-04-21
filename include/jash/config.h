@@ -1,6 +1,8 @@
 #ifndef SHELL_CONFIG
 #define SHELL_CONFIG
 
+#include <stdbool.h>
+
 struct ShellConfig {
   /*
    * Apparently all of the variables inside this
@@ -11,8 +13,8 @@ struct ShellConfig {
   char *promptCharacter;
 };
 
-struct ShellConfig shellConfig;
+extern struct ShellConfig shellConfig;
 
-void jash_init_shellProperties();
+void jash_initConfig();
 
 #endif
