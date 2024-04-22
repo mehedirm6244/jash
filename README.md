@@ -1,21 +1,25 @@
 ## JASH
-JASH stands for Just Another Shell. Through this project, I'm supposed to learn some of the basics of C languge.
+JASH stands for "Just Another SHell". Through this project, I'm supposed to learn some of the basics of the C languge.
 
 ### Preview
 <p align="center"><img src="https://github.com/mehedirm6244/jash/blob/main/assets/preview.png?raw=true"></p>
 
 ### Try JASH
-Dependencies:
+#### Dependencies:
 - GNU readline
 
-Cloning and compilation:
+#### Cloning and compilation:
 ```
 git clone github.com/mehedirm6244/jash
-cd /jash/src
-gcc main.c -o jash -lreadline
+cd jash
+mkdir build && cd build
+cmake ..
+cmake --build . 
 ```
 
-Running JASH:
+#### Executing JASH:
+
+The binary file is created as `jash/build/jash`. Assuming that your current working directory is `jash/build`, you can execute JASH by typing:
 ```
 ./jash
 ```
