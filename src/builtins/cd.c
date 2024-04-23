@@ -23,7 +23,7 @@
 
 #include <jash/builtins/cd.h>
 
-int jash_cd(char **args) { 
+int jash_cd(char **args) {
   /* cd to $HOME if no argument is passed */
   if (args[1] == NULL) {
     args[1] = strdup(getenv("HOME"));

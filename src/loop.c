@@ -15,12 +15,10 @@
  * along with jash. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdbool.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <readline/history.h>
-#include <readline/readline.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
@@ -28,19 +26,22 @@
 #include <jash/builtins.h>
 #include <jash/config.h>
 #include <jash/loop.h>
+#include <jash/readline.h>
+#include <jash/trace.h>
+
+void signal_handler() {}
 
 void jash_loop() {
   int status;
-  char *buffer;
+  JString *buffer;
   char **args;
   time_t timeElapsed = 0;
+  init_termios();
+  signal(SIGINT, signal_handler);
 
   do {
     /* Read line from input */
     buffer = jash_prompt(timeElapsed);
-
-    /* Save input to history */
-    add_history(buffer);
 
     /*
      * TODO: check for multi-commands in a single line
@@ -59,7 +60,8 @@ void jash_loop() {
      * args[0] is the command being called
      * args[i] (i>0) is an argument of args[0]
      */
-    args = jash_splitLine(buffer);
+    char *c_string = jstring_get_cstring_copy(buffer);
+    args = jash_splitLine(c_string);
 
     timeElapsed = time(NULL);
 
@@ -72,18 +74,19 @@ void jash_loop() {
 
     timeElapsed = time(NULL) - timeElapsed;
 
-    free(buffer);
+    jstring_free(buffer);
+    free(c_string);
     free(args);
 
     printf("\n");
   } while (status);
 }
 
-char* jash_prompt(time_t timeElapsed) {
+JString *jash_prompt(time_t timeElapsed) {
   /* Print the present working directory if not forbidden */
   if (shellConfig.showPWD == 1) {
     char *pwd = strdup(getenv("PWD")),
-         *home = strdup(getenv("HOME"));
+        *home = strdup(getenv("HOME"));
 
     printf("\x1b[36m");
 
@@ -100,8 +103,10 @@ char* jash_prompt(time_t timeElapsed) {
     }
 
     printf("\x1b[0m • \x1b[32mTook %lds\x1b[0m\n", timeElapsed);
+    free(pwd);
+    free(home);
   }
-  
+
   /*
    * prompt[1] or ps1 is used for single line inputs
    * prompt[2] or ps2 is used for multi line inputs
@@ -111,59 +116,43 @@ char* jash_prompt(time_t timeElapsed) {
   asprintf(&prompt[1], "… \x1b[33m%s\x1b[0m ", shellConfig.promptCharacter);
   int promptIdx = 0;
 
-  int bufSize = JASH_READLINE_BUFSIZE, index = 0;
-  char *buffer = malloc(bufSize * sizeof(char*));
-
-  if (!buffer) {
-    perror("JASH");
-    exit(EXIT_FAILURE);
-  }
-  /*
-   * Prevent weird but obvious behavior for using strcat(); Read more: 
-   * https://stackoverflow.com/questions/18838933/why-do-i-first-have-to-strcpy-before-strcat
-   */
-  buffer[0] = '\0';
 
   /*
    * This is a very dirty way to handle multiline inputs
    * Anyway, who cares
    */
+  JString *buffer = jstring_create();
+  JString *raw_buffer = jstring_create();
   bool readInput = true;
   do {
-    char *line;
-    int lineLength;
-
-    line = readline(prompt[promptIdx]);
-    lineLength = strlen(line);
-    if (line[lineLength - 1] == '\\') {
-      line[lineLength - 1] = '\0';
+    JString *line = read_line(prompt[promptIdx]);
+    if (!jstring_is_empty(line)) {
+      if (!jstring_is_empty(raw_buffer)) {
+        jstring_push(raw_buffer, '\n');
+      }
+      jstring_append(raw_buffer, line);
+    }
+    if (jstring_last(line) == '\\') {
+      jstring_remove(line, jstring_last_idx(line));
       promptIdx = 1;
     } else {
       readInput = false;
-      promptIdx = 0;
     }
 
-    index += lineLength;
-    if (index >= bufSize) {
-      bufSize += JASH_READLINE_BUFSIZE;
-      buffer = realloc(buffer, bufSize * sizeof(char*));
-
-      if (!buffer) {
-        perror("JASH");
-        exit(EXIT_FAILURE);
-      }
-    }
-
-    strcat(buffer, line);
+    jstring_append(buffer, line);
+    jstring_free(line);
   } while (readInput);
-  
+
+  jstring_free(raw_buffer);
+  free(prompt[0]);
+  free(prompt[1]);
   return buffer;
 }
 
-char** jash_splitLine(char *arg) {
+char **jash_splitLine(char *arg) {
   int bufSize = JASH_SPLITLINE_BUFSIZE;
   int index = 0;
-  char **tokens = malloc(bufSize * sizeof(char*));
+  char **tokens = malloc(bufSize * sizeof(char *));
   char *token;
 
   if (!tokens) {
@@ -178,7 +167,7 @@ char** jash_splitLine(char *arg) {
 
     if (index >= bufSize) {
       bufSize += JASH_SPLITLINE_BUFSIZE;
-      tokens = realloc(tokens, bufSize * sizeof(char*));
+      tokens = realloc(tokens, bufSize * sizeof(char *));
       if (!tokens) {
         perror("JASH");
         exit(EXIT_FAILURE);
