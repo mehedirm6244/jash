@@ -1,12 +1,9 @@
-## JASH
 JASH stands for "Just Another SHell". Through this project, I'm supposed to learn some of the basics of the C languge.
 
 ### Preview
 <p align="center"><img src="https://github.com/mehedirm6244/jash/blob/main/assets/preview.png?raw=true"></p>
 
 ### Try JASH
-#### Dependencies:
-- GNU readline
 
 #### Cloning and compilation:
 ```
