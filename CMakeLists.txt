@@ -24,6 +24,7 @@ add_executable(
     src/jstring.c
     src/readline.c
     src/trace.c
+    src/utils.c
 )
 
 set_property(TARGET jash PROPERTY C_STANDARD 11)

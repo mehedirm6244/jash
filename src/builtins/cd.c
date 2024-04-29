@@ -32,9 +32,9 @@ int jash_cd(char **args) {
   /* Replace ~ with $HOME (/home/user) */
   if (args[1][0] == '~') {
     char *home = strdup(getenv("HOME"));
-    size_t homeLen = strlen(home);
-    memmove(args[1] + homeLen, args[1] + 1, strlen(args[1]));
-    memcpy(args[1], home, homeLen);
+    size_t home_len = strlen(home);
+    memmove(args[1] + home_len, args[1] + 1, strlen(args[1]));
+    memcpy(args[1], home, home_len);
   }
 
   if (chdir(args[1]) != 0) {

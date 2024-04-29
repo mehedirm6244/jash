@@ -25,11 +25,10 @@
 int main(int argc, char *argv[]) {
   /*
    * Check if any flag is passed
-   * Example: `jash --version` will not call jash_loop() i.e. the shell
-   * itself but just print the running version of JASH and then exit
+   * Example: `jash --version` will not call jash_loop() i.e. the shell itself
+   * but just print the live version of it and exit
    */
-  int opt;
-  for (opt = 1; opt < argc; opt++) {
+  for (int opt = 1; opt < argc; opt++) {
     if (strcmp(argv[opt], "--help") == 0 || strcmp(argv[opt], "-h") == 0) {
       jash_help(NULL);
     } else if (strcmp(argv[opt], "--version") == 0 ||
@@ -46,18 +45,15 @@ int main(int argc, char *argv[]) {
     exit(EXIT_SUCCESS);
   }
 
-  /* Initialize shell properties */
-  jash_initConfig();
+  /* Initialize shell configuration from `~/.jashrc` */
+  jash_init_config();
 
-  /*
-   * Show a welcome message when running JASH for the first time
-   * unless disabled in the config
-   */
-  if (shellConfig.showWelcome == 1) {
+  /* Show a welcome message after starting jash unless disabled */
+  if (shell_config.show_welcome) {
     jash_welcome();
   }
 
-  /* JASH starts from here */
+  /* jash starts from here */
   jash_loop();
 
   return EXIT_SUCCESS;

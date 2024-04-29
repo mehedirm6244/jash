@@ -1,9 +1,9 @@
-#ifndef JASH_BUILTINS_H
-#define JASH_BUILTINS_H
+#ifndef JASH_BUILTINS
+#define JASH_BUILTINS
 
 #define N_BUILTINS 3
 
 extern char *jash_builtins[];
-extern int (*jash_builtinFunc[]) (char **);
+extern int (*jash_builtin_func[]) (char **);
 
-#endif
+#endif // JASH_BUILTINS

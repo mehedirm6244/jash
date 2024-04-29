@@ -76,7 +76,7 @@ static JString *read_history() {
   if (!history_content) {
     fprintf(stderr, "readline[Fatal]: failed to allocate buffer for history");
     print_trace();
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   fread(history_content, sizeof(char), fsize, history_file);

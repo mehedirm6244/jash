@@ -17,15 +17,15 @@
 
 #include <jash/config.h>
 
-struct ShellConfig shellConfig;
+struct Shell_config shell_config;
 
-void jash_initConfig() {
+void jash_init_config() {
   /*
    * These are the default properties for JASH shell
-   * These will be overwritten by `.jashrc` if it exists
+   * will be overwritten by `.jashrc` if it exists
    * To be implemented later
    */
-  shellConfig.showWelcome = 1;
-  shellConfig.showPWD = 1;
-  shellConfig.promptCharacter = "❯";
+  shell_config.show_welcome = 1;
+  shell_config.show_pwd = 1;
+  shell_config.prompt_char = "❯";
 }

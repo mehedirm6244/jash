@@ -1,17 +1,5 @@
 # Changelog
 
-## [0.1.0] - 2024-04-14
+## [0.1.0] - 202X-XX-XX
 
-_First commit. Fully experimental. Do expect a lot of bugs and missing features._
-
-## [0.1.1] - 2024-XX-XX
-
-### Added
-
-- Support for multiline inputs
-- Show how much time elapsed in a process (if greater than 3 seconds)
-
-### Changed
-
-- Use readline() for reading inputs
-- Improved `cd`
+_First somewhat usable release. Fully experimental. Do expect a lot of bugs and missing features._

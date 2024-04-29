@@ -20,13 +20,13 @@
 #include <jash/builtins/exit.h>
 
 char *jash_builtins[] = {
-        "cd",
-        "help",
-        "exit"
+  "cd",
+  "help",
+  "exit"
 };
 
-int (*jash_builtinFunc[]) (char **) = {
-        &jash_cd,
-        &jash_help,
-        &jash_exit
+int (*jash_builtin_func[]) (char **) = {
+  &jash_cd,
+  &jash_help,
+  &jash_exit
 };

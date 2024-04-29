@@ -28,6 +28,7 @@
 #include <jash/loop.h>
 #include <jash/readline.h>
 #include <jash/trace.h>
+#include <jash/utils.h>
 
 void signal_handler() {}
 
@@ -35,113 +36,101 @@ void jash_loop() {
   int status;
   JString *buffer;
   char **args;
-  time_t timeElapsed = 0;
+  time_t time_elapsed;
   init_termios();
   signal(SIGINT, signal_handler);
 
+  /* Set console window title */
+  jash_set_console_title("jash");
+
   do {
-    /* Read line from input */
-    buffer = jash_prompt(timeElapsed);
+    int cmd_count;
+    char **cmd;
+    status = 1;
+    time_elapsed = 0;
 
-    /*
-     * TODO: check for multi-commands in a single line
-     * through looking for ';'
-     * Corner case: `echo "hqhqhq; hqhqhq"
-     *
-     * How to implement:
-     * Use strtok, and something equivalent to string commands[]
-     * then for each cmd in commands:
-     *   splitline(cmd)
-     *   execute(cmd)
-     */
-
-    /*
-     * Split input to tokens
-     * args[0] is the command being called
-     * args[i] (i>0) is an argument of args[0]
-     */
+    /* Read input */
+    buffer = jash_prompt(time_elapsed);
     char *c_string = jstring_get_cstring_copy(buffer);
-    args = jash_splitLine(c_string);
 
-    timeElapsed = time(NULL);
+    /*
+     * Check if the buffer contains multiple commands
+     * and split them to execute individually
+     */
+    cmd = jash_split_cstring(c_string, ";", &cmd_count);
 
-    /* Execute the command if it's not empty to prevent segfault */
-    if (args[0] != NULL) {
-      status = jash_execute(args);
-    } else {
-      status = 1;
+    time_elapsed = time(NULL);
+    for (int i = 0; i < cmd_count; i++) {
+      char **args = jash_split_cstring(cmd[i], " \t\r\n\a", NULL);
+
+      /* Avoid SEGFAULT by ensuring that input is not empty */
+      if (args[0] != NULL) {
+        status = jash_execute(args);
+      }
+
+      free(args);
     }
+    time_elapsed = time(NULL) - time_elapsed;
 
-    timeElapsed = time(NULL) - timeElapsed;
 
     jstring_free(buffer);
     free(c_string);
-    free(args);
+    free(cmd);
 
     printf("\n");
   } while (status);
 }
 
-JString *jash_prompt(time_t timeElapsed) {
-  /* Print the present working directory if not forbidden */
-  if (shellConfig.showPWD == 1) {
+JString *jash_prompt(time_t time_elapsed) {
+  if (shell_config.show_pwd) {
     char *pwd = strdup(getenv("PWD")),
         *home = strdup(getenv("HOME"));
 
-    printf("\x1b[36m");
-
-    /* Print "~" instead of "/home/user" for aesthetics */
+    /* Print "~" instead of "/home/user" */
     if (strstr(pwd, home) != NULL) {
-      int i;
-      printf("~");
-      for (i = strlen(home); i < strlen(pwd); i++) {
-        printf("%c", pwd[i]);
-      }
-    } else {
-      /* Example: "/usr/share" which is not under $HOME */
-      printf("%s", pwd);
+      int home_len = strlen(home), pwd_len = strlen(pwd);
+      asprintf(&pwd, "~%s", jash_substr(pwd, home_len, pwd_len - home_len));
     }
+      
+    printf("\x1b[36m%s\x1b[0m • \x1b[32mTook %lds\x1b[0m\n", pwd, time_elapsed);
 
-    printf("\x1b[0m • \x1b[32mTook %lds\x1b[0m\n", timeElapsed);
     free(pwd);
     free(home);
   }
 
   /*
-   * prompt[1] or ps1 is used for single line inputs
-   * prompt[2] or ps2 is used for multi line inputs
+   * prompt[1] or ps1 for single line inputs
+   * prompt[2] or ps2 for multi line inputs
    */
+  int prompt_idx = 0;
   char *prompt[2];
-  asprintf(&prompt[0], "\x1b[35m%s\x1b[0m ", shellConfig.promptCharacter);
-  asprintf(&prompt[1], "… \x1b[33m%s\x1b[0m ", shellConfig.promptCharacter);
-  int promptIdx = 0;
+  asprintf(&prompt[0], "\x1b[35m%s\x1b[0m ", shell_config.prompt_char);
+  asprintf(&prompt[1], "… \x1b[33m%s\x1b[0m ", shell_config.prompt_char);
 
-
-  /*
-   * This is a very dirty way to handle multiline inputs
-   * Anyway, who cares
-   */
+  /* A very dirty way to handle multiline inputs */
   JString *buffer = jstring_create();
   JString *raw_buffer = jstring_create();
-  bool readInput = true;
+  bool read_input = true;
+
   do {
-    JString *line = read_line(prompt[promptIdx]);
+    JString *line = read_line(prompt[prompt_idx]);
     if (!jstring_is_empty(line)) {
       if (!jstring_is_empty(raw_buffer)) {
         jstring_push(raw_buffer, '\n');
       }
       jstring_append(raw_buffer, line);
     }
+
     if (jstring_last(line) == '\\') {
       jstring_remove(line, jstring_last_idx(line));
-      promptIdx = 1;
+      prompt_idx = 1;
     } else {
-      readInput = false;
+      read_input = false;
     }
 
     jstring_append(buffer, line);
     jstring_free(line);
-  } while (readInput);
+  } while (read_input);
 
   jstring_free(raw_buffer);
   free(prompt[0]);
@@ -149,49 +138,11 @@ JString *jash_prompt(time_t timeElapsed) {
   return buffer;
 }
 
-char **jash_splitLine(char *arg) {
-  int bufSize = JASH_SPLITLINE_BUFSIZE;
-  int index = 0;
-  char **tokens = malloc(bufSize * sizeof(char *));
-  char *token;
-
-  if (!tokens) {
-    perror("JASH");
-    exit(EXIT_FAILURE);
-  }
-
-  token = strtok(arg, JASH_SPLITLINE_DELIM);
-  while (token != NULL) {
-    tokens[index] = token;
-    index++;
-
-    if (index >= bufSize) {
-      bufSize += JASH_SPLITLINE_BUFSIZE;
-      tokens = realloc(tokens, bufSize * sizeof(char *));
-      if (!tokens) {
-        perror("JASH");
-        exit(EXIT_FAILURE);
-      }
-    }
-
-    token = strtok(NULL, JASH_SPLITLINE_DELIM);
-  }
-  tokens[index] = NULL;
-  return tokens;
-}
-
 int jash_execute(char **args) {
-  /*
-   * Check if the command is a builtin of JASH
-   * If that's the case, then there's no need to
-   * spawn a fork and do stuffs
-   * We can call that command directly as a function
-   * then
-   */
-  int i;
-  for (i = 0; i < N_BUILTINS; i++) {
+  /* Check if input is a builtin. If so, it can be called directly */
+  for (int i = 0; i < N_BUILTINS; i++) {
     if (strcmp(args[0], jash_builtins[i]) == 0) {
-      return (*jash_builtinFunc[i])(args);
+      return (*jash_builtin_func[i])(args);
     }
   }
 

@@ -8,22 +8,24 @@
 #define GROW_BUFFER() \
   if (j_string->size + 1 >= j_string->cap) { \
     j_string->cap *= 2; \
-    jstring_realloc(j_string, j_string->cap);                                \
+    jstring_realloc(j_string, j_string->cap); \
   }
 
 #define BOUNDS_CHECK(idx) \
   if (idx >= j_string->size) { \
-    fprintf(stderr, "JString[Fatal]: out of bound access. Index is %zu and size is %zu\n", idx, j_string->size); \
+    fprintf(stderr, "JString[Fatal]: out of bound access. \
+      Index is %zu and size is %zu\n", idx, j_string->size); \
     print_trace(); \
-    exit(1); \
+    exit(EXIT_FAILURE); \
   }
 
 static void *jstring_alloc(size_t size) {
   void *block = malloc(size);
   if (block == NULL) {
-    fprintf(stderr, "JString[Fatal]: failed to allocate block with size %zu\n", size);
+    fprintf(stderr, "JString[Fatal]: \
+      failed to allocate block with size %zu\n", size);
     print_trace();
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   return block;
@@ -32,9 +34,10 @@ static void *jstring_alloc(size_t size) {
 static void jstring_realloc(JString *j_string, size_t new_size) {
   void *block = realloc(j_string->buf, new_size);
   if (block == NULL) {
-    fprintf(stderr, "JString[Fatal]: failed to reallocate block with new_size %zu\n", new_size);
+    fprintf(stderr, "JString[Fatal]: \
+      failed to reallocate block with new_size %zu\n", new_size);
     print_trace();
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   j_string->buf = block;
@@ -220,7 +223,7 @@ JString **jstring_split(JString *j_string, char delim, size_t *count) {
     if (!reallocd) {
       fprintf(stderr, "JString[Fatal]: failed to reallocate buffer");
       print_trace();
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     splitted = reallocd;
 

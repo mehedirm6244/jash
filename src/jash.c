@@ -25,7 +25,7 @@ void jash_version() {
 }
 
 void jash_welcome() {
-  printf("Welcome to JASH V%d.%d.%d !\n",
+  printf("JASH V%d.%d.%d\n",
          JASH_VERSION_MAJOR, JASH_VERSION_MINOR, JASH_VERSION_PATCH);
   printf("To submit an issue, visit https://github.com/mehedirm6244/jash/issues\n");
   printf("Type `help` for assistance\n\n");

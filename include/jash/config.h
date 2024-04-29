@@ -1,20 +1,16 @@
-#ifndef SHELL_CONFIG
-#define SHELL_CONFIG
+#ifndef JASH_CONFIG
+#define JASH_CONFIG
 
 #include <stdbool.h>
 
-struct ShellConfig {
-  /*
-   * Apparently all of the variables inside this
-   * struct are of char type. Need a bit help over here
-   */
-  bool showWelcome;
-  bool showPWD;
-  char *promptCharacter;
+struct Shell_config {
+  bool show_welcome;
+  bool show_pwd;
+  char *prompt_char;
 };
 
-extern struct ShellConfig shellConfig;
+extern struct Shell_config shell_config;
 
-void jash_initConfig();
+void jash_init_config();
 
-#endif
+#endif //JASH_CONFIG
